@@ -6,6 +6,11 @@
   "scripts": {
     "dev:bff": "tsx watch apps/bff/src/index.ts",
     "dev:web": "vite --config apps/web/vite.config.ts",
+    "dev": "./scripts/dev.sh start",
+    "dev:stop": "./scripts/dev.sh stop",
+    "dev:restart": "./scripts/dev.sh restart",
+    "dev:status": "./scripts/dev.sh status",
+    "dev:logs": "./scripts/dev.sh logs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
