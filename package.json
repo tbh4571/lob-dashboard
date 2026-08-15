@@ -17,7 +17,10 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
-    "playwright:install": "playwright install chromium"
+    "playwright:install": "playwright install chromium",
+    "docker:build": "docker build -t lob-dashboard .",
+    "docker:run": "docker run --rm -p 4000:4000 lob-dashboard",
+    "docker:up": "docker compose up --build"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
