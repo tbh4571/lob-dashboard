@@ -1,12 +1,9 @@
-import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Typography,
   Grid,
   Card,
   CardContent,
-  CardActionArea,
-  Chip,
   Stack,
   Skeleton,
 } from '@mui/material';
@@ -15,15 +12,22 @@ import TimelineIcon from '@mui/icons-material/Timeline';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import { trpc } from '../lib/trpc';
+import { ExecutiveOverview } from './dashboard/ExecutiveOverview';
+import { DeveloperOverview } from './dashboard/DeveloperOverview';
+import { OperationsOverview } from './dashboard/OperationsOverview';
 
 export function DashboardPage() {
   const { data: apps, isLoading: appsLoading } = trpc.applications.list.useQuery();
-  const { data: runs, isLoading: runsLoading } = trpc.runs.list.useQuery({ limit: 8 });
+  const { data: components } = trpc.components.list.useQuery();
+  const { data: schedules } = trpc.schedules.list.useQuery();
+  const { data: runs, isLoading: runsLoading } = trpc.runs.list.useQuery({ limit: 20 });
   const { data: user } = trpc.auth.me.useQuery();
 
   const successCount = runs?.filter((r) => r.status === 'success').length ?? 0;
   const failedCount = runs?.filter((r) => r.status === 'failed').length ?? 0;
   const runningCount = runs?.filter((r) => r.status === 'running').length ?? 0;
+
+  const overviewReady = !appsLoading && !runsLoading && apps && runs && components && schedules && user;
 
   return (
     <Box>
@@ -97,55 +101,18 @@ export function DashboardPage() {
         </Grid>
       </Grid>
 
-      <Typography variant="h6" fontWeight={600} gutterBottom>
-        Recent Pipeline Runs
-      </Typography>
-
-      {runsLoading ? (
+      {!overviewReady ? (
         <Stack spacing={1}>
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} variant="rounded" height={72} />
           ))}
         </Stack>
+      ) : user.role === 'executive' ? (
+        <ExecutiveOverview applications={apps} components={components} runs={runs} />
+      ) : user.role === 'operations' ? (
+        <OperationsOverview components={components} runs={runs} schedules={schedules} />
       ) : (
-        <Stack spacing={1}>
-          {runs?.map((run) => (
-            <Card key={run.id} variant="outlined">
-              <CardActionArea component={RouterLink} to={`/runs/${run.id}`}>
-                <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                  <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
-                    <Box>
-                      <Typography fontWeight={600}>{run.label}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {new Date(run.startTime).toLocaleString()} · {run.trigger}
-                      </Typography>
-                    </Box>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Chip
-                        size="small"
-                        label={run.type === 'ci' ? 'CI / Rebase' : 'CD / Repave'}
-                        variant="outlined"
-                      />
-                      <Chip
-                        size="small"
-                        label={run.status}
-                        color={
-                          run.status === 'success'
-                            ? 'success'
-                            : run.status === 'failed'
-                              ? 'error'
-                              : run.status === 'running'
-                                ? 'info'
-                                : 'default'
-                        }
-                      />
-                    </Stack>
-                  </Stack>
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          ))}
-        </Stack>
+        <DeveloperOverview runs={runs} schedules={schedules} components={components} user={user} />
       )}
     </Box>
   );
