@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   CardActionArea,
-  Grid,
   Chip,
   Stack,
   Table,
@@ -19,8 +18,10 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import type { Component, Environment, PipelineRun, Schedule } from '@lob/shared';
 import { envStatusColor, envStatusLabel, runStatusColor } from '../../lib/status';
+import { StatCardRow, type StatCardDef } from '../../components/StatCard';
 
 interface Props {
+  baseStats: StatCardDef[];
   components: Component[];
   runs: PipelineRun[];
   schedules: Schedule[];
@@ -28,7 +29,7 @@ interface Props {
 
 const ENVS: Environment[] = ['nonprod', 'preprod', 'production'];
 
-export function OperationsOverview({ components, runs, schedules }: Props) {
+export function OperationsOverview({ baseStats, components, runs, schedules }: Props) {
   const atRiskComponents = components.filter((c) =>
     ENVS.some((env) => {
       const status = c.environments[env]?.status;
@@ -39,40 +40,23 @@ export function OperationsOverview({ components, runs, schedules }: Props) {
   const cdRuns = runs.filter((r) => r.type === 'cd').slice(0, 6);
   const enabledSchedules = schedules.filter((s) => s.enabled);
 
+  const stats: StatCardDef[] = [
+    ...baseStats,
+    {
+      icon: <WarningAmberIcon color={atRiskComponents.length > 0 ? 'warning' : 'success'} />,
+      value: atRiskComponents.length,
+      label: 'Components degraded or unknown',
+    },
+    {
+      icon: <RocketLaunchIcon color="info" />,
+      value: enabledSchedules.length,
+      label: 'Active repave schedules',
+    },
+  ];
+
   return (
     <Box>
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant="outlined">
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <WarningAmberIcon color={atRiskComponents.length > 0 ? 'warning' : 'success'} />
-                <Typography variant="h5" fontWeight={700}>
-                  {atRiskComponents.length}
-                </Typography>
-              </Stack>
-              <Typography variant="body2" color="text.secondary">
-                Components degraded or unknown
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant="outlined">
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <RocketLaunchIcon color="info" />
-                <Typography variant="h5" fontWeight={700}>
-                  {enabledSchedules.length}
-                </Typography>
-              </Stack>
-              <Typography variant="body2" color="text.secondary">
-                Active repave schedules
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <StatCardRow stats={stats} />
 
       <Typography variant="h6" fontWeight={600} gutterBottom>
         Environment Health

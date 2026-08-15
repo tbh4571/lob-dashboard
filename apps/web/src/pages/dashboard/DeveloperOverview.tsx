@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   CardActionArea,
-  Grid,
   Chip,
   Stack,
   Table,
@@ -18,15 +17,17 @@ import {
 import BuildIcon from '@mui/icons-material/Build';
 import type { Component, PipelineRun, Schedule, User } from '@lob/shared';
 import { runStatusColor } from '../../lib/status';
+import { StatCardRow, type StatCardDef } from '../../components/StatCard';
 
 interface Props {
+  baseStats: StatCardDef[];
   runs: PipelineRun[];
   schedules: Schedule[];
   components: Component[];
   user: User;
 }
 
-export function DeveloperOverview({ runs, schedules, components, user }: Props) {
+export function DeveloperOverview({ baseStats, runs, schedules, components, user }: Props) {
   const ciRuns = runs.filter((r) => r.type === 'ci').slice(0, 6);
   const ciCompleted = runs.filter(
     (r) => r.type === 'ci' && (r.status === 'success' || r.status === 'failed'),
@@ -39,25 +40,18 @@ export function DeveloperOverview({ runs, schedules, components, user }: Props) 
   const mySchedules = schedules.filter((s) => s.createdBy === user.id);
   const componentName = (id: string) => components.find((c) => c.id === id)?.name ?? id;
 
+  const stats: StatCardDef[] = [
+    ...baseStats,
+    {
+      icon: <BuildIcon color={ciSuccessRate >= 90 ? 'success' : 'warning'} />,
+      value: `${ciSuccessRate}%`,
+      label: 'CI / Rebase success rate',
+    },
+  ];
+
   return (
     <Box>
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant="outlined">
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <BuildIcon color={ciSuccessRate >= 90 ? 'success' : 'warning'} />
-                <Typography variant="h5" fontWeight={700}>
-                  {ciSuccessRate}%
-                </Typography>
-              </Stack>
-              <Typography variant="body2" color="text.secondary">
-                CI / Rebase success rate
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <StatCardRow stats={stats} />
 
       <Typography variant="h6" fontWeight={600} gutterBottom>
         Recent Builds (CI / Rebase)

@@ -1,17 +1,10 @@
-import {
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Stack,
-  Skeleton,
-} from '@mui/material';
+import { Box, Typography, Stack, Skeleton } from '@mui/material';
 import AppsIcon from '@mui/icons-material/Apps';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import { trpc } from '../lib/trpc';
+import type { StatCardDef } from '../components/StatCard';
 import { ExecutiveOverview } from './dashboard/ExecutiveOverview';
 import { DeveloperOverview } from './dashboard/DeveloperOverview';
 import { OperationsOverview } from './dashboard/OperationsOverview';
@@ -29,6 +22,13 @@ export function DashboardPage() {
 
   const overviewReady = !appsLoading && !runsLoading && apps && runs && components && schedules && user;
 
+  const baseStats: StatCardDef[] = [
+    { icon: <AppsIcon color="primary" />, value: apps?.length ?? 0, label: 'Applications' },
+    { icon: <CheckCircleIcon color="success" />, value: successCount, label: 'Successful runs' },
+    { icon: <ErrorIcon color="error" />, value: failedCount, label: 'Failed runs' },
+    { icon: <TimelineIcon color="info" />, value: runningCount, label: 'Running now' },
+  ];
+
   return (
     <Box>
       <Typography variant="h4" fontWeight={700} gutterBottom>
@@ -38,69 +38,6 @@ export function DashboardPage() {
         Line of Business applications, components, and pipeline visibility
       </Typography>
 
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant="outlined">
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <AppsIcon color="primary" />
-                <Typography variant="h5" fontWeight={700}>
-                  {appsLoading ? '\u2014' : apps?.length ?? 0}
-                </Typography>
-              </Stack>
-              <Typography variant="body2" color="text.secondary">
-                Applications
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant="outlined">
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <CheckCircleIcon color="success" />
-                <Typography variant="h5" fontWeight={700}>
-                  {successCount}
-                </Typography>
-              </Stack>
-              <Typography variant="body2" color="text.secondary">
-                Successful runs
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant="outlined">
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <ErrorIcon color="error" />
-                <Typography variant="h5" fontWeight={700}>
-                  {failedCount}
-                </Typography>
-              </Stack>
-              <Typography variant="body2" color="text.secondary">
-                Failed runs
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant="outlined">
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <TimelineIcon color="info" />
-                <Typography variant="h5" fontWeight={700}>
-                  {runningCount}
-                </Typography>
-              </Stack>
-              <Typography variant="body2" color="text.secondary">
-                Running now
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
       {!overviewReady ? (
         <Stack spacing={1}>
           {[1, 2, 3].map((i) => (
@@ -108,11 +45,11 @@ export function DashboardPage() {
           ))}
         </Stack>
       ) : user.role === 'executive' ? (
-        <ExecutiveOverview applications={apps} components={components} runs={runs} />
+        <ExecutiveOverview baseStats={baseStats} applications={apps} components={components} runs={runs} />
       ) : user.role === 'operations' ? (
-        <OperationsOverview components={components} runs={runs} schedules={schedules} />
+        <OperationsOverview baseStats={baseStats} components={components} runs={runs} schedules={schedules} />
       ) : (
-        <DeveloperOverview runs={runs} schedules={schedules} components={components} user={user} />
+        <DeveloperOverview baseStats={baseStats} runs={runs} schedules={schedules} components={components} user={user} />
       )}
     </Box>
   );

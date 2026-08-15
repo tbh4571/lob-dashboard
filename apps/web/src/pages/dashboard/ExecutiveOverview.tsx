@@ -3,10 +3,7 @@ import {
   Box,
   Typography,
   Card,
-  CardContent,
-  Grid,
   Chip,
-  Stack,
   Table,
   TableBody,
   TableCell,
@@ -19,8 +16,10 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import type { Application, Component, PipelineRun } from '@lob/shared';
 import { envStatusColor, envStatusLabel } from '../../lib/status';
+import { StatCardRow, type StatCardDef } from '../../components/StatCard';
 
 interface Props {
+  baseStats: StatCardDef[];
   applications: Application[];
   components: Component[];
   runs: PipelineRun[];
@@ -31,7 +30,7 @@ type EnvStatus = 'healthy' | 'degraded' | 'unknown' | 'deploying';
 // Higher = more concerning. Used to pick the worst environment status across a group of components.
 const SEVERITY: Record<EnvStatus, number> = { degraded: 3, unknown: 2, deploying: 1, healthy: 0 };
 
-export function ExecutiveOverview({ applications, components, runs }: Props) {
+export function ExecutiveOverview({ baseStats, applications, components, runs }: Props) {
   const prodComponents = components.filter((c) => c.environments.production);
   const healthyProdCount = prodComponents.filter(
     (c) => c.environments.production?.status === 'healthy',
@@ -61,55 +60,28 @@ export function ExecutiveOverview({ applications, components, runs }: Props) {
 
   const needsAttention = appRows.filter((r) => SEVERITY[r.worstStatus] >= 2);
 
+  const stats: StatCardDef[] = [
+    ...baseStats,
+    {
+      icon: <ShieldIcon color={prodHealthPct === 100 ? 'success' : 'warning'} />,
+      value: `${prodHealthPct}%`,
+      label: 'Production health',
+    },
+    {
+      icon: <WarningAmberIcon color={needsAttention.length > 0 ? 'warning' : 'success'} />,
+      value: needsAttention.length,
+      label: 'Applications needing attention',
+    },
+    {
+      icon: <TrendingDownIcon color={changeFailureRate > 0 ? 'error' : 'success'} />,
+      value: `${changeFailureRate}%`,
+      label: 'Production change failure rate',
+    },
+  ];
+
   return (
     <Box>
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant="outlined">
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <ShieldIcon color={prodHealthPct === 100 ? 'success' : 'warning'} />
-                <Typography variant="h5" fontWeight={700}>
-                  {prodHealthPct}%
-                </Typography>
-              </Stack>
-              <Typography variant="body2" color="text.secondary">
-                Production health
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant="outlined">
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <WarningAmberIcon color={needsAttention.length > 0 ? 'warning' : 'success'} />
-                <Typography variant="h5" fontWeight={700}>
-                  {needsAttention.length}
-                </Typography>
-              </Stack>
-              <Typography variant="body2" color="text.secondary">
-                Applications needing attention
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant="outlined">
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <TrendingDownIcon color={changeFailureRate > 0 ? 'error' : 'success'} />
-                <Typography variant="h5" fontWeight={700}>
-                  {changeFailureRate}%
-                </Typography>
-              </Stack>
-              <Typography variant="body2" color="text.secondary">
-                Production change failure rate
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <StatCardRow stats={stats} />
 
       <Typography variant="h6" fontWeight={600} gutterBottom>
         Application Portfolio Health
