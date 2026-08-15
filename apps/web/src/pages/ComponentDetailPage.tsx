@@ -32,6 +32,7 @@ import BuildIcon from '@mui/icons-material/Build';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { trpc } from '../lib/trpc';
+import { envStatusColor, envStatusLabel } from '../lib/status';
 import type { Environment } from '@lob/shared';
 
 export function ComponentDetailPage() {
@@ -149,17 +150,7 @@ export function ComponentDetailPage() {
                     <Typography fontWeight={600} textTransform="capitalize">
                       {env}
                     </Typography>
-                    <Chip
-                      size="small"
-                      label={st?.status ?? 'unknown'}
-                      color={
-                        st?.status === 'healthy'
-                          ? 'success'
-                          : st?.status === 'degraded'
-                            ? 'warning'
-                            : 'default'
-                      }
-                    />
+                    <Chip size="small" label={envStatusLabel(st?.status)} color={envStatusColor(st?.status)} />
                   </Stack>
                   {st?.version && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -169,11 +160,6 @@ export function ComponentDetailPage() {
                   {st?.lastDeployedAt && (
                     <Typography variant="caption" color="text.secondary" display="block">
                       Last deploy: {new Date(st.lastDeployedAt).toLocaleString()}
-                    </Typography>
-                  )}
-                  {st?.replicas != null && (
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Replicas: {st.readyReplicas}/{st.replicas}
                     </Typography>
                   )}
                 </CardContent>

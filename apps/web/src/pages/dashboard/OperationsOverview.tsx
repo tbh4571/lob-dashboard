@@ -18,7 +18,7 @@ import {
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import type { Component, Environment, PipelineRun, Schedule } from '@lob/shared';
-import { envStatusColor, runStatusColor } from '../../lib/status';
+import { envStatusColor, envStatusLabel, runStatusColor } from '../../lib/status';
 
 interface Props {
   components: Component[];
@@ -42,7 +42,7 @@ export function OperationsOverview({ components, runs, schedules }: Props) {
   return (
     <Box>
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card variant="outlined">
             <CardContent>
               <Stack direction="row" alignItems="center" spacing={1}>
@@ -57,7 +57,7 @@ export function OperationsOverview({ components, runs, schedules }: Props) {
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card variant="outlined">
             <CardContent>
               <Stack direction="row" alignItems="center" spacing={1}>
@@ -103,14 +103,9 @@ export function OperationsOverview({ components, runs, schedules }: Props) {
                     <TableCell key={env}>
                       <Chip
                         size="small"
-                        label={st?.status ?? 'unknown'}
+                        label={envStatusLabel(st?.status)}
                         color={envStatusColor(st?.status)}
                       />
-                      {st?.replicas != null && (
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          {st.readyReplicas}/{st.replicas} ready
-                        </Typography>
-                      )}
                     </TableCell>
                   );
                 })}

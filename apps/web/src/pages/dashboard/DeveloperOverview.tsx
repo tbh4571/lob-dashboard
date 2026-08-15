@@ -42,7 +42,7 @@ export function DeveloperOverview({ runs, schedules, components, user }: Props) 
   return (
     <Box>
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card variant="outlined">
             <CardContent>
               <Stack direction="row" alignItems="center" spacing={1}>

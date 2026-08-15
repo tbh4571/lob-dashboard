@@ -13,6 +13,7 @@ import {
   Link,
 } from '@mui/material';
 import { trpc } from '../lib/trpc';
+import { envStatusColor, envStatusLabel } from '../lib/status';
 
 export function ApplicationDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -78,14 +79,8 @@ export function ApplicationDetailPage() {
                         <Chip
                           key={env}
                           size="small"
-                          label={`${env}: ${status?.status ?? 'n/a'}`}
-                          color={
-                            status?.status === 'healthy'
-                              ? 'success'
-                              : status?.status === 'degraded'
-                                ? 'warning'
-                                : 'default'
-                          }
+                          label={`${env}: ${envStatusLabel(status?.status)}`}
+                          color={envStatusColor(status?.status)}
                           variant="outlined"
                         />
                       );

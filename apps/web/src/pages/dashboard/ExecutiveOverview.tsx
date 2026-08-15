@@ -18,7 +18,7 @@ import ShieldIcon from '@mui/icons-material/Shield';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import type { Application, Component, PipelineRun } from '@lob/shared';
-import { envStatusColor } from '../../lib/status';
+import { envStatusColor, envStatusLabel } from '../../lib/status';
 
 interface Props {
   applications: Application[];
@@ -64,7 +64,7 @@ export function ExecutiveOverview({ applications, components, runs }: Props) {
   return (
     <Box>
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card variant="outlined">
             <CardContent>
               <Stack direction="row" alignItems="center" spacing={1}>
@@ -79,7 +79,7 @@ export function ExecutiveOverview({ applications, components, runs }: Props) {
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card variant="outlined">
             <CardContent>
               <Stack direction="row" alignItems="center" spacing={1}>
@@ -94,7 +94,7 @@ export function ExecutiveOverview({ applications, components, runs }: Props) {
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card variant="outlined">
             <CardContent>
               <Stack direction="row" alignItems="center" spacing={1}>
@@ -137,7 +137,7 @@ export function ExecutiveOverview({ applications, components, runs }: Props) {
                 <TableCell>{componentCount}</TableCell>
                 <TableCell>
                   {componentCount > 0 ? (
-                    <Chip size="small" label={worstStatus} color={envStatusColor(worstStatus)} />
+                    <Chip size="small" label={envStatusLabel(worstStatus)} color={envStatusColor(worstStatus)} />
                   ) : (
                     '—'
                   )}

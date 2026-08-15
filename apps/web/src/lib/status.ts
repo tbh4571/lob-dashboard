@@ -27,3 +27,19 @@ export function envStatusColor(
       return 'default';
   }
 }
+
+/** Display label for an environment status. "healthy" reads as "Completed" in the UI. */
+export function envStatusLabel(
+  status: 'healthy' | 'degraded' | 'unknown' | 'deploying' | undefined,
+): string {
+  switch (status) {
+    case 'healthy':
+      return 'Completed';
+    case 'degraded':
+      return 'Degraded';
+    case 'deploying':
+      return 'Deploying';
+    default:
+      return 'Unknown';
+  }
+}
