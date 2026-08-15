@@ -117,7 +117,7 @@ export function DashboardPage() {
                     <Box>
                       <Typography fontWeight={600}>{run.label}</Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {new Date(run.startTime).toLocaleString()} \u00b7 {run.trigger}
+                        {new Date(run.startTime).toLocaleString()} · {run.trigger}
                       </Typography>
                     </Box>
                     <Stack direction="row" spacing={1} alignItems="center">
