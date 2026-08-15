@@ -7,10 +7,11 @@ import { trpc } from './trpc';
 
 const theme = createTheme({
   palette: {
-    mode: 'light',
-    primary: { main: '#1e40af' },
-    secondary: { main: '#0f766e' },
-    background: { default: '#f8fafc', paper: '#ffffff' },
+    mode: 'dark',
+    primary: { main: '#E5525A', dark: '#A31621', light: '#F08088', contrastText: '#ffffff' },
+    secondary: { main: '#FFC72C', dark: '#CC9E1F', light: '#FFD966', contrastText: '#1A1A1A' },
+    background: { default: '#141010', paper: '#1e1817' },
+    divider: 'rgba(255, 255, 255, 0.12)',
   },
   typography: {
     fontFamily: '"Inter", system-ui, -apple-system, sans-serif',
