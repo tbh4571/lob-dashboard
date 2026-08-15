@@ -56,35 +56,37 @@ export function ApplicationDetailPage() {
       </Typography>
       {app.owner && <Chip size="small" label={`Owner: ${app.owner}`} sx={{ mb: 3 }} />}
 
-      <Typography variant="h6" fontWeight={600} gutterBottom>
+      <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
         Components
       </Typography>
 
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         {components?.map((comp) => (
           <Grid key={comp.id} size={{ xs: 12, md: 6 }}>
             <Card variant="outlined">
               <CardActionArea component={RouterLink} to={`/components/${comp.id}`}>
-                <CardContent>
-                  <Typography variant="h6" fontWeight={600}>
-                    {comp.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    {comp.description}
-                  </Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                    {(['nonprod', 'preprod', 'production'] as const).map((env) => {
-                      const status = comp.environments[env];
-                      return (
-                        <Chip
-                          key={env}
-                          size="small"
-                          label={`${env}: ${envStatusLabel(status?.status)}`}
-                          color={envStatusColor(status?.status)}
-                          variant="outlined"
-                        />
-                      );
-                    })}
+                <CardContent sx={{ p: 3 }}>
+                  <Stack spacing={1.5}>
+                    <Typography variant="h6" fontWeight={600}>
+                      {comp.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {comp.description}
+                    </Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                      {(['nonprod', 'preprod', 'production'] as const).map((env) => {
+                        const status = comp.environments[env];
+                        return (
+                          <Chip
+                            key={env}
+                            size="small"
+                            label={`${env}: ${envStatusLabel(status?.status)}`}
+                            color={envStatusColor(status?.status)}
+                            variant="outlined"
+                          />
+                        );
+                      })}
+                    </Stack>
                   </Stack>
                 </CardContent>
               </CardActionArea>
