@@ -7,11 +7,10 @@ import { trpc } from './trpc';
 
 const theme = createTheme({
   palette: {
-    mode: 'dark',
-    primary: { main: '#E5525A', dark: '#A31621', light: '#F08088', contrastText: '#ffffff' },
-    secondary: { main: '#FFC72C', dark: '#CC9E1F', light: '#FFD966', contrastText: '#1A1A1A' },
-    background: { default: '#141010', paper: '#1e1817' },
-    divider: 'rgba(255, 255, 255, 0.12)',
+    mode: 'light',
+    primary: { main: '#1e40af' },
+    secondary: { main: '#0f766e' },
+    background: { default: '#f8fafc', paper: '#ffffff' },
   },
   typography: {
     fontFamily: '"Inter", system-ui, -apple-system, sans-serif',
@@ -43,8 +42,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
     trpc.createClient({
       links: [
         httpBatchLink({
-          url: 'http://localhost:4000/trpc',
+          // Relative URL works with Vite proxy (dev) and same-origin Docker/production.
+          // Override with VITE_TRPC_URL if the BFF is on a different host.
+          url: import.meta.env.VITE_TRPC_URL || '/trpc',
           transformer: superjson,
+          // Dev: send a mock role via header. For real PingFed, put the access token here.
           headers() {
             const role = localStorage.getItem('dev-role') || 'developer';
             return {
