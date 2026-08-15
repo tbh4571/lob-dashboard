@@ -158,6 +158,8 @@ dashboard-monorepo/
 │   └── actions.spec.ts
 ├── packages/
 │   └── shared/              # Shared domain types
+├── Dockerfile               # Single-container build (UI + BFF)
+├── docker-compose.yml
 ├── playwright.config.ts
 ├── vitest.config.ts
 ├── package.json
@@ -228,6 +230,9 @@ Refresh. The BFF accepts `Authorization: Bearer mock-<role>`.
 |---------|-------------|
 | `npm run dev:bff` | Start Express + tRPC BFF (watch mode) |
 | `npm run dev:web` | Start Vite frontend |
+| `npm run docker:build` | Build single-container image |
+| `npm run docker:run` | Run image on port 4000 |
+| `npm run docker:up` | `docker compose up --build` |
 | `npm test` | Vitest unit / API tests (once) |
 | `npm run test:watch` | Vitest watch mode |
 | `npm run test:coverage` | Vitest with coverage |
@@ -310,3 +315,44 @@ pnpm dev:bff   # terminal 1
 pnpm dev:web   # terminal 2
 pnpm test
 ```
+
+## Docker (single container)
+
+One container runs **both** the React UI and the Express tRPC BFF. The BFF serves the built SPA and the API on the same port.
+
+```bash
+# Build
+docker build -t lob-dashboard .
+
+# Run
+docker run --rm -p 4000:4000 lob-dashboard
+
+# Or with Compose
+docker compose up --build
+
+# Or via npm
+npm run docker:up
+```
+
+Open **http://localhost:4000**
+
+| Path | Purpose |
+|------|---------|
+| `/` | React dashboard (SPA) |
+| `/trpc` | tRPC API |
+| `/health` | Health check |
+
+Role switching still works via the avatar menu or:
+
+```js
+localStorage.setItem('dev-role', 'operations') // executive | developer | operations
+```
+
+### How it works
+
+1. Multi-stage `Dockerfile` builds the Vite SPA → static files, and compiles the BFF with `tsc`.
+2. Runtime image copies the compiled BFF + SPA into `/app/public`.
+3. Express serves `/trpc` + `/health`, then static assets, then SPA fallback (`index.html`).
+4. The frontend uses a **relative** `/trpc` URL so it talks to the same origin inside the container.
+
+Local development is unchanged (two processes + Vite proxy). Docker is for a single-process / production-style run.
