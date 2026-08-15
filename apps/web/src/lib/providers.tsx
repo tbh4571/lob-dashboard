@@ -8,9 +8,9 @@ import { trpc } from './trpc';
 const theme = createTheme({
   palette: {
     mode: 'light',
-    primary: { main: '#1e40af' },
-    secondary: { main: '#0f766e' },
-    background: { default: '#f8fafc', paper: '#ffffff' },
+    primary: { main: '#D71E28', dark: '#A31621', light: '#E5525A', contrastText: '#ffffff' },
+    secondary: { main: '#FFC72C', dark: '#CC9E1F', light: '#FFD966', contrastText: '#1A1A1A' },
+    background: { default: '#f7f5f3', paper: '#ffffff' },
   },
   typography: {
     fontFamily: '"Inter", system-ui, -apple-system, sans-serif',

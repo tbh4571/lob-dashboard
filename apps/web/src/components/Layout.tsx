@@ -74,14 +74,14 @@ export function Layout() {
         elevation={0}
         sx={{
           zIndex: (t) => t.zIndex.drawer + 1,
-          bgcolor: 'background.paper',
-          color: 'text.primary',
-          borderBottom: '1px solid',
-          borderColor: 'divider',
+          bgcolor: 'primary.main',
+          color: 'primary.contrastText',
+          borderBottom: '3px solid',
+          borderColor: 'secondary.main',
         }}
       >
         <Toolbar>
-          <IconButton edge="start" onClick={() => setMobileOpen(!mobileOpen)} sx={{ mr: 1, display: { sm: 'none' } }}>
+          <IconButton edge="start" color="inherit" onClick={() => setMobileOpen(!mobileOpen)} sx={{ mr: 1, display: { sm: 'none' } }}>
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600, display: { xs: 'none', sm: 'block' } }}>
@@ -92,12 +92,16 @@ export function Layout() {
               <Chip
                 size="small"
                 label={user.role}
-                color={user.role === 'operations' ? 'error' : user.role === 'developer' ? 'primary' : 'default'}
-                variant="outlined"
+                sx={{
+                  bgcolor: 'secondary.main',
+                  color: 'secondary.contrastText',
+                  fontWeight: 600,
+                  border: 'none',
+                }}
               />
             )}
             <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main', color: 'secondary.contrastText' }}>
                 <PersonIcon fontSize="small" />
               </Avatar>
             </IconButton>
