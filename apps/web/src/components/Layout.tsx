@@ -19,7 +19,9 @@ import {
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AppsIcon from '@mui/icons-material/Apps';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import TimelineIcon from '@mui/icons-material/Timeline';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import MenuIcon from '@mui/icons-material/Menu';
 import PersonIcon from '@mui/icons-material/Person';
 import { trpc } from '../lib/trpc';
@@ -29,8 +31,18 @@ const DRAWER_WIDTH = 240;
 
 const navItems = [
   { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
-  { label: 'Applications', path: '/applications', icon: <AppsIcon /> },
-  { label: 'Runs', path: '/runs', icon: <TimelineIcon /> },
+  {
+    label: 'Applications',
+    path: '/applications',
+    icon: <AppsIcon />,
+    children: [{ label: 'Components', path: '/components', icon: <ViewModuleIcon fontSize="small" /> }],
+  },
+  {
+    label: 'Runs',
+    path: '/runs',
+    icon: <TimelineIcon />,
+    children: [{ label: 'Deployments', path: '/deployments', icon: <RocketLaunchIcon fontSize="small" /> }],
+  },
 ];
 
 export function Layout() {
@@ -52,16 +64,30 @@ export function Layout() {
       <Divider />
       <List>
         {navItems.map((item) => (
-          <ListItemButton
-            key={item.path}
-            component={Link}
-            to={item.path}
-            selected={location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path))}
-            onClick={() => setMobileOpen(false)}
-          >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.label} />
-          </ListItemButton>
+          <Box key={item.path}>
+            <ListItemButton
+              component={Link}
+              to={item.path}
+              selected={location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path))}
+              onClick={() => setMobileOpen(false)}
+            >
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.label} />
+            </ListItemButton>
+            {item.children?.map((child) => (
+              <ListItemButton
+                key={child.path}
+                component={Link}
+                to={child.path}
+                selected={location.pathname === child.path || location.pathname.startsWith(`${child.path}/`)}
+                onClick={() => setMobileOpen(false)}
+                sx={{ pl: 4 }}
+              >
+                <ListItemIcon sx={{ minWidth: 36 }}>{child.icon}</ListItemIcon>
+                <ListItemText primary={child.label} slotProps={{ primary: { variant: 'body2' } }} />
+              </ListItemButton>
+            ))}
+          </Box>
         ))}
       </List>
     </Box>
