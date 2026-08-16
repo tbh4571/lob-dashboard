@@ -11,19 +11,12 @@ import {
   ListItemText,
   Box,
   IconButton,
-  Chip,
-  Menu,
-  MenuItem,
   Divider,
-  Avatar,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AppsIcon from '@mui/icons-material/Apps';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import MenuIcon from '@mui/icons-material/Menu';
-import PersonIcon from '@mui/icons-material/Person';
-import { trpc } from '../lib/trpc';
-import type { UserRole } from '@lob/shared';
 
 const DRAWER_WIDTH = 240;
 
@@ -35,14 +28,7 @@ const navItems = [
 
 export function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const location = useLocation();
-  const { data: user } = trpc.auth.me.useQuery();
-
-  const setRole = (role: UserRole) => {
-    localStorage.setItem('dev-role', role);
-    window.location.reload();
-  };
 
   const drawer = (
     <Box sx={{ pt: 1 }}>
@@ -84,45 +70,9 @@ export function Layout() {
           <IconButton edge="start" color="inherit" onClick={() => setMobileOpen(!mobileOpen)} sx={{ mr: 1, display: { sm: 'none' } }}>
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600, display: { xs: 'none', sm: 'block' } }}>
+          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
             Line of Business Dashboard
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {user && (
-              <Chip
-                size="small"
-                label={user.role}
-                sx={{
-                  bgcolor: 'secondary.main',
-                  color: 'secondary.contrastText',
-                  fontWeight: 600,
-                  border: 'none',
-                }}
-              />
-            )}
-            <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main', color: 'secondary.contrastText' }}>
-                <PersonIcon fontSize="small" />
-              </Avatar>
-            </IconButton>
-            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-              <MenuItem disabled>
-                <Typography variant="body2">{user?.name || 'Guest'}</Typography>
-              </MenuItem>
-              <MenuItem disabled>
-                <Typography variant="caption" color="text.secondary">
-                  {user?.email}
-                </Typography>
-              </MenuItem>
-              <Divider />
-              <MenuItem disabled>
-                <Typography variant="caption">Switch role (dev only)</Typography>
-              </MenuItem>
-              <MenuItem onClick={() => setRole('executive')}>Executive</MenuItem>
-              <MenuItem onClick={() => setRole('developer')}>Developer</MenuItem>
-              <MenuItem onClick={() => setRole('operations')}>Operations</MenuItem>
-            </Menu>
-          </Box>
         </Toolbar>
       </AppBar>
 

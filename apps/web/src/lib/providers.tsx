@@ -1,9 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { httpBatchLink } from '@trpc/client';
-import superjson from 'superjson';
+import type { ReactNode } from 'react';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
-import { trpc } from './trpc';
 
 const theme = createTheme({
   palette: {
@@ -27,43 +23,10 @@ const theme = createTheme({
 });
 
 export function AppProviders({ children }: { children: ReactNode }) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 30_000,
-            refetchOnWindowFocus: false,
-          },
-        },
-      }),
-  );
-
-  const [trpcClient] = useState(() =>
-    trpc.createClient({
-      links: [
-        httpBatchLink({
-          url: 'http://localhost:4000/trpc',
-          transformer: superjson,
-          headers() {
-            const role = localStorage.getItem('dev-role') || 'developer';
-            return {
-              Authorization: `Bearer mock-${role}`,
-            };
-          },
-        }),
-      ],
-    }),
-  );
-
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          {children}
-        </ThemeProvider>
-      </QueryClientProvider>
-    </trpc.Provider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {children}
+    </ThemeProvider>
   );
 }

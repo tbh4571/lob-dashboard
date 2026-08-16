@@ -1,4 +1,4 @@
-import type { RunStatus } from '@lob/shared';
+import type { RunStatus } from '../types';
 
 export function runStatusColor(status: RunStatus): 'success' | 'error' | 'info' | 'default' {
   switch (status) {
