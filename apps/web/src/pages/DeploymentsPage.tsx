@@ -13,30 +13,32 @@ import {
 } from '@mui/material';
 import { useDataStore } from '../lib/store';
 import { capitalize, runStatusColor } from '../lib/status';
-import type { RunStatus, RunType } from '../types';
+import type { Environment, RunStatus } from '../types';
 
-export function RunsPage() {
+export function DeploymentsPage() {
   const { listRuns } = useDataStore();
-  const [typeFilter, setTypeFilter] = useState<RunType | 'all'>('all');
+  const [envFilter, setEnvFilter] = useState<Environment | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<RunStatus | 'all'>('all');
 
-  const runs = listRuns({
-    type: typeFilter === 'all' ? undefined : typeFilter,
+  const deployments = listRuns({
+    type: 'cd',
     status: statusFilter === 'all' ? undefined : statusFilter,
+    environment: envFilter === 'all' ? undefined : envFilter,
     limit: 50,
   });
 
   return (
     <Box>
       <Typography variant="h4" fontWeight={700} sx={{ mb: 3 }}>
-        CI (Rebase / GitHub Actions) and CD (Repave / Harness) executions
+        CD (Repave / Harness) deployments across every environment
       </Typography>
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
-        <ToggleButtonGroup size="small" exclusive value={typeFilter} onChange={(_, v) => v && setTypeFilter(v)}>
-          <ToggleButton value="all">All</ToggleButton>
-          <ToggleButton value="ci">CI / Rebase</ToggleButton>
-          <ToggleButton value="cd">CD / Repave</ToggleButton>
+        <ToggleButtonGroup size="small" exclusive value={envFilter} onChange={(_, v) => v && setEnvFilter(v)}>
+          <ToggleButton value="all">All environments</ToggleButton>
+          <ToggleButton value="nonprod">Nonprod</ToggleButton>
+          <ToggleButton value="preprod">Preprod</ToggleButton>
+          <ToggleButton value="production">Production</ToggleButton>
         </ToggleButtonGroup>
 
         <ToggleButtonGroup size="small" exclusive value={statusFilter} onChange={(_, v) => v && setStatusFilter(v)}>
@@ -48,11 +50,16 @@ export function RunsPage() {
       </Stack>
 
       <Stack spacing={1}>
-        {runs.map((run) => (
+        {deployments.map((run) => (
           <Card key={run.id} variant="outlined">
             <CardActionArea component={RouterLink} to={`/runs/${run.id}`}>
               <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} gap={1}>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  justifyContent="space-between"
+                  alignItems={{ sm: 'center' }}
+                  gap={1}
+                >
                   <Box>
                     <Typography fontWeight={600}>{run.label}</Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -60,11 +67,18 @@ export function RunsPage() {
                       {run.endTime && ` → ${new Date(run.endTime).toLocaleString()}`}
                       {' · '}
                       {capitalize(run.trigger)}
-                      {run.environments && ` · ${run.environments.map(capitalize).join(', ')}`}
                     </Typography>
                   </Box>
-                  <Stack direction="row" spacing={1}>
-                    <Chip size="small" label={run.type === 'ci' ? 'CI / Rebase' : 'CD / Repave'} variant="outlined" />
+                  <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                    {run.environments?.map((env) => (
+                      <Chip
+                        key={env}
+                        size="small"
+                        label={capitalize(env)}
+                        variant="outlined"
+                        color={env === 'production' ? 'secondary' : 'default'}
+                      />
+                    ))}
                     <Chip size="small" label={capitalize(run.status)} color={runStatusColor(run.status)} />
                   </Stack>
                 </Stack>
@@ -72,9 +86,9 @@ export function RunsPage() {
             </CardActionArea>
           </Card>
         ))}
-        {runs.length === 0 && (
+        {deployments.length === 0 && (
           <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
-            No runs match the current filters.
+            No deployments match the current filters.
           </Typography>
         )}
       </Stack>

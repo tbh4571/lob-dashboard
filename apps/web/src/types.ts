@@ -41,11 +41,21 @@ export interface ComponentEnvironmentStatus {
   readyReplicas?: number;
 }
 
+export type ScheduleFrequency = 'weekly' | 'biweekly';
+
+/** automated = Rebase + Repave on the schedule; manual = Rebase only. */
+export type ScheduleMode = 'automated' | 'manual';
+
 export interface Schedule {
   id: string;
   componentId: string;
-  name: string;
-  cron: string;
+  frequency: ScheduleFrequency;
+  /** 0 = Sunday .. 6 = Saturday */
+  dayOfWeek: number;
+  /** 0-23, on the hour */
+  hour: number;
+  mode: ScheduleMode;
+  /** Repave targets. Empty when mode is 'manual'. */
   environments: Environment[];
   enabled: boolean;
   createdBy: string;

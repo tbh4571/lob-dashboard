@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { PersonaProvider } from './persona';
+import { DataStoreProvider } from './store';
 
 const theme = createTheme({
   palette: {
@@ -26,7 +28,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      {children}
+      <PersonaProvider>
+        <DataStoreProvider>{children}</DataStoreProvider>
+      </PersonaProvider>
     </ThemeProvider>
   );
 }

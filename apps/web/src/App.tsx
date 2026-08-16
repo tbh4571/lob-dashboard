@@ -6,6 +6,7 @@ import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
 import { ComponentDetailPage } from './pages/ComponentDetailPage';
 import { RunsPage } from './pages/RunsPage';
 import { RunDetailPage } from './pages/RunDetailPage';
+import { DeploymentsPage } from './pages/DeploymentsPage';
 
 export function App() {
   return (
@@ -17,6 +18,7 @@ export function App() {
         <Route path="components/:id" element={<ComponentDetailPage />} />
         <Route path="runs" element={<RunsPage />} />
         <Route path="runs/:id" element={<RunDetailPage />} />
+        <Route path="deployments" element={<DeploymentsPage />} />
       </Route>
     </Routes>
   );

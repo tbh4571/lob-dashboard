@@ -12,23 +12,38 @@ import {
   Box,
   IconButton,
   Divider,
+  Chip,
+  Menu,
+  MenuItem,
+  Avatar,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AppsIcon from '@mui/icons-material/Apps';
 import TimelineIcon from '@mui/icons-material/Timeline';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import MenuIcon from '@mui/icons-material/Menu';
+import PersonIcon from '@mui/icons-material/Person';
+import { usePersona, type PersonaRole } from '../lib/persona';
 
 const DRAWER_WIDTH = 240;
 
 const navItems = [
   { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
   { label: 'Applications', path: '/applications', icon: <AppsIcon /> },
-  { label: 'Runs', path: '/runs', icon: <TimelineIcon /> },
+  { label: 'Pipeline Runs', path: '/runs', icon: <TimelineIcon /> },
+  { label: 'Deployments', path: '/deployments', icon: <RocketLaunchIcon /> },
 ];
 
 export function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const location = useLocation();
+  const { persona, setRole } = usePersona();
+
+  const chooseRole = (role: PersonaRole) => {
+    setRole(role);
+    setAnchorEl(null);
+  };
 
   const drawer = (
     <Box sx={{ pt: 1 }}>
@@ -73,6 +88,47 @@ export function Layout() {
           <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
             Line of Business Dashboard
           </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Chip
+              size="small"
+              label={persona.role}
+              sx={{
+                bgcolor: 'secondary.main',
+                color: 'secondary.contrastText',
+                fontWeight: 600,
+                border: 'none',
+                textTransform: 'capitalize',
+              }}
+            />
+            <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main', color: 'secondary.contrastText' }}>
+                <PersonIcon fontSize="small" />
+              </Avatar>
+            </IconButton>
+            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+              <MenuItem disabled>
+                <Typography variant="body2">{persona.name}</Typography>
+              </MenuItem>
+              <MenuItem disabled>
+                <Typography variant="caption" color="text.secondary">
+                  {persona.email}
+                </Typography>
+              </MenuItem>
+              <Divider />
+              <MenuItem disabled>
+                <Typography variant="caption">Switch role (demo only, no auth)</Typography>
+              </MenuItem>
+              <MenuItem selected={persona.role === 'executive'} onClick={() => chooseRole('executive')}>
+                Executive
+              </MenuItem>
+              <MenuItem selected={persona.role === 'developer'} onClick={() => chooseRole('developer')}>
+                Developer
+              </MenuItem>
+              <MenuItem selected={persona.role === 'operations'} onClick={() => chooseRole('operations')}>
+                Operations
+              </MenuItem>
+            </Menu>
+          </Box>
         </Toolbar>
       </AppBar>
 

@@ -1,17 +1,86 @@
-import { Link as RouterLink } from 'react-router-dom';
-import { Box, Breadcrumbs, Link } from '@mui/material';
-import { NoDataNotice } from '../components/NoDataNotice';
+import { Link as RouterLink, useParams } from 'react-router-dom';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  CardActionArea,
+  Chip,
+  Stack,
+  Breadcrumbs,
+  Link,
+} from '@mui/material';
+import Grid from '@mui/material/Grid2';
+import { getApplicationById, listComponentsByApplication } from '../lib/mockData';
+import { envStatusColor } from '../lib/status';
 
 export function ApplicationDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const app = id ? getApplicationById(id) : undefined;
+  const components = id ? listComponentsByApplication(id) : [];
+
+  if (!app) {
+    return <Typography>Application not found</Typography>;
+  }
+
   return (
     <Box>
       <Breadcrumbs sx={{ mb: 2 }}>
         <Link component={RouterLink} to="/applications" underline="hover" color="inherit">
           Applications
         </Link>
+        <Typography color="text.primary">{app.name}</Typography>
       </Breadcrumbs>
 
-      <NoDataNotice label="application details" />
+      <Typography variant="h4" fontWeight={700} gutterBottom>
+        {app.name}
+      </Typography>
+      <Typography color="text.secondary" sx={{ mb: 1 }}>
+        {app.description}
+      </Typography>
+      {app.owner && <Chip size="small" label={`Owner: ${app.owner}`} sx={{ mb: 3 }} />}
+
+      <Typography variant="h6" fontWeight={600} gutterBottom>
+        Components
+      </Typography>
+
+      <Grid container spacing={2}>
+        {components.map((comp) => (
+          <Grid key={comp.id} size={{ xs: 12, md: 6 }}>
+            <Card variant="outlined">
+              <CardActionArea component={RouterLink} to={`/components/${comp.id}`}>
+                <CardContent>
+                  <Typography variant="h6" fontWeight={600}>
+                    {comp.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                    {comp.description}
+                  </Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    {(['nonprod', 'preprod', 'production'] as const).map((env) => {
+                      const status = comp.environments[env];
+                      return (
+                        <Chip
+                          key={env}
+                          size="small"
+                          label={`${env}: ${status?.status ?? 'n/a'}`}
+                          color={envStatusColor(status?.status)}
+                          variant="outlined"
+                        />
+                      );
+                    })}
+                  </Stack>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          </Grid>
+        ))}
+        {components.length === 0 && (
+          <Grid size={12}>
+            <Typography color="text.secondary">No components for this application yet.</Typography>
+          </Grid>
+        )}
+      </Grid>
     </Box>
   );
 }
