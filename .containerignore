@@ -1,0 +1,9 @@
+node_modules
+apps/web/node_modules
+packages/*/node_modules
+apps/web/dist
+.git
+.dev
+*.log
+*.pid
+.DS_Store
