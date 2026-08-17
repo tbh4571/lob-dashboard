@@ -54,9 +54,9 @@ export function DashboardPage() {
       {persona.role === 'executive' ? (
         <ExecutiveOverview applications={applications} components={components} />
       ) : persona.role === 'operations' ? (
-        <OperationsOverview components={components} runs={runs} schedules={schedules} />
+        <OperationsOverview components={components} schedules={schedules} />
       ) : (
-        <DeveloperOverview runs={runs} schedules={schedules} components={components} persona={persona} />
+        <DeveloperOverview schedules={schedules} components={components} persona={persona} />
       )}
     </Box>
   );

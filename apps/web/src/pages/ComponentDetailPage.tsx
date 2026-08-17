@@ -4,7 +4,6 @@ import {
   Box,
   Typography,
   Card,
-  CardContent,
   Chip,
   Stack,
   Breadcrumbs,
@@ -17,32 +16,25 @@ import {
   IconButton,
   Tooltip,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormGroup,
-  FormControlLabel,
-  Checkbox,
 } from '@mui/material';
-import Grid from '@mui/material/Grid2';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import BuildIcon from '@mui/icons-material/Build';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
-import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import PauseIcon from '@mui/icons-material/Pause';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import { getApplicationById, getComponentById } from '../lib/mockData';
+import { applicationUrl, getApplicationById, getComponentBySlug, runUrl } from '../lib/mockData';
 import { useDataStore, type ScheduleFormInput } from '../lib/store';
 import { usePersona } from '../lib/persona';
-import { capitalize, envStatusColor, runStatusColor } from '../lib/status';
+import { capitalize, runStatusColor } from '../lib/status';
 import { cronExpression, describeMode, describeNextRun, describeSchedule } from '../lib/scheduleFormat';
 import { ScheduleFormDialog } from '../components/ScheduleFormDialog';
+import { PaginationFooter } from '../components/PaginationFooter';
+import { usePagination } from '../lib/usePagination';
 import type { Environment, Schedule } from '../types';
 
 export function ComponentDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { appSlug, componentSlug } = useParams<{ appSlug: string; componentSlug: string }>();
   const navigate = useNavigate();
   const { persona } = usePersona();
   const { listSchedulesByComponent, listRuns, toggleSchedule, createSchedule, updateSchedule, triggerRebase, triggerRepave } =
@@ -50,10 +42,8 @@ export function ComponentDetailPage() {
 
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | undefined>(undefined);
-  const [repaveOpen, setRepaveOpen] = useState(false);
-  const [repaveEnvs, setRepaveEnvs] = useState<Environment[]>(['nonprod']);
 
-  const component = id ? getComponentById(id) : undefined;
+  const component = appSlug && componentSlug ? getComponentBySlug(appSlug, componentSlug) : undefined;
 
   if (!component) {
     return <Typography>Component not found</Typography>;
@@ -61,15 +51,11 @@ export function ComponentDetailPage() {
 
   const application = getApplicationById(component.applicationId);
   const schedules = listSchedulesByComponent(component.id);
-  const runs = listRuns({ componentId: component.id, limit: 10 });
+  const rebaseRuns = usePagination(listRuns({ componentId: component.id, type: 'ci' }), 5);
+  const repaveRuns = usePagination(listRuns({ componentId: component.id, type: 'cd' }), 5);
 
   const canManage = persona.role === 'developer' || persona.role === 'operations';
   const canProd = persona.role === 'operations';
-
-  const openNewSchedule = () => {
-    setEditingSchedule(undefined);
-    setScheduleDialogOpen(true);
-  };
 
   const openEditSchedule = (schedule: Schedule) => {
     setEditingSchedule(schedule);
@@ -85,19 +71,14 @@ export function ComponentDetailPage() {
     setScheduleDialogOpen(false);
   };
 
-  const toggleRepaveEnv = (env: Environment) => {
-    setRepaveEnvs((prev) => (prev.includes(env) ? prev.filter((e) => e !== env) : [...prev, env]));
-  };
-
   const handleRebase = () => {
     const run = triggerRebase(component.id, persona.id);
-    navigate(`/runs/${run.id}`);
+    navigate(runUrl(run));
   };
 
-  const handleStartRepave = () => {
-    const run = triggerRepave(component.id, repaveEnvs, persona.id);
-    setRepaveOpen(false);
-    navigate(`/runs/${run.id}`);
+  const handleRepave = (env: Environment) => {
+    const run = triggerRepave(component.id, [env], persona.id);
+    navigate(runUrl(run));
   };
 
   return (
@@ -107,7 +88,7 @@ export function ComponentDetailPage() {
           Applications
         </Link>
         {application && (
-          <Link component={RouterLink} to={`/applications/${application.id}`} underline="hover" color="inherit">
+          <Link component={RouterLink} to={applicationUrl(application.id)} underline="hover" color="inherit">
             {application.name}
           </Link>
         )}
@@ -123,76 +104,46 @@ export function ComponentDetailPage() {
         </Box>
 
         {canManage && (
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             <Button variant="outlined" startIcon={<BuildIcon />} onClick={handleRebase}>
               Rebase
             </Button>
-            <Button variant="contained" startIcon={<RocketLaunchIcon />} onClick={() => setRepaveOpen(true)}>
-              Repave
+            <Button variant="outlined" startIcon={<RocketLaunchIcon />} onClick={() => handleRepave('nonprod')}>
+              Repave Nonprod
             </Button>
+            <Button variant="outlined" startIcon={<RocketLaunchIcon />} onClick={() => handleRepave('preprod')}>
+              Repave Preprod
+            </Button>
+            <Tooltip title={canProd ? '' : 'Operations role required'}>
+              <span>
+                <Button
+                  variant="contained"
+                  startIcon={<RocketLaunchIcon />}
+                  onClick={() => handleRepave('production')}
+                  disabled={!canProd}
+                >
+                  Repave Prod
+                </Button>
+              </span>
+            </Tooltip>
           </Stack>
         )}
       </Stack>
 
       <Typography variant="h6" fontWeight={600} gutterBottom>
-        Environments
+        Schedules
       </Typography>
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        {(['nonprod', 'preprod', 'production'] as const).map((env) => {
-          const st = component.environments[env];
-          return (
-            <Grid key={env} size={{ xs: 12, sm: 4 }}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography fontWeight={600} textTransform="capitalize">
-                      {env}
-                    </Typography>
-                    <Chip size="small" label={capitalize(st?.status ?? 'unknown')} color={envStatusColor(st?.status)} />
-                  </Stack>
-                  {st?.version && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      Version: {st.version}
-                    </Typography>
-                  )}
-                  {st?.lastDeployedAt && (
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Last deploy: {new Date(st.lastDeployedAt).toLocaleString()}
-                    </Typography>
-                  )}
-                  {st?.replicas != null && (
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Replicas: {st.readyReplicas}/{st.replicas}
-                    </Typography>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          );
-        })}
-      </Grid>
-
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-        <Typography variant="h6" fontWeight={600}>
-          Schedules
-        </Typography>
-        {canManage && (
-          <Button size="small" startIcon={<AddIcon />} onClick={openNewSchedule}>
-            New schedule
-          </Button>
-        )}
-      </Stack>
       {schedules.length > 0 ? (
         <Card variant="outlined" sx={{ mb: 4 }}>
-          <Table size="small">
+          <Table size="small" sx={{ tableLayout: 'fixed' }}>
             <TableHead>
               <TableRow>
-                <TableCell>Schedule</TableCell>
-                <TableCell>Image</TableCell>
-                <TableCell>Mode</TableCell>
-                <TableCell>Next run</TableCell>
-                <TableCell>Status</TableCell>
-                {canManage && <TableCell align="right">Actions</TableCell>}
+                <TableCell sx={{ width: '19%' }}>Schedule</TableCell>
+                <TableCell sx={{ width: '19%' }}>Latest Rebase Image</TableCell>
+                <TableCell sx={{ width: '23%' }}>Mode</TableCell>
+                <TableCell sx={{ width: '19%' }}>Next Planned Run</TableCell>
+                <TableCell sx={{ width: '10%' }}>Status</TableCell>
+                {canManage && <TableCell align="right" sx={{ width: '10%' }}>Actions</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -205,7 +156,7 @@ export function ComponentDetailPage() {
                       {s.frequency === 'biweekly' && ' · every 2 weeks'}
                     </Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ wordBreak: 'break-all' }}>
                     {component.currentImageTag ? (
                       <code>{component.imageRepository}:{component.currentImageTag}</code>
                     ) : (
@@ -213,11 +164,11 @@ export function ComponentDetailPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Chip size="small" variant="outlined" label={describeMode(s.mode)} />
+                    <Chip size="small" variant="outlined" label={describeMode(s.mode)} sx={{ maxWidth: 'none' }} />
                   </TableCell>
                   <TableCell>{describeNextRun(s)}</TableCell>
                   <TableCell>
-                    <Chip size="small" label={s.enabled ? 'Enabled' : 'Paused'} color={s.enabled ? 'success' : 'default'} />
+                    <Chip size="small" label={s.enabled ? 'Active' : 'Paused'} color={s.enabled ? 'success' : 'default'} />
                   </TableCell>
                   {canManage && (
                     <TableCell align="right">
@@ -245,26 +196,87 @@ export function ComponentDetailPage() {
       )}
 
       <Typography variant="h6" fontWeight={600} gutterBottom>
-        Recent Runs
+        Rebase Runs
       </Typography>
-      <Card variant="outlined">
-        <Table size="small">
+      <Card variant="outlined" sx={{ mb: 4 }}>
+        <Table size="small" sx={{ tableLayout: 'fixed' }}>
           <TableHead>
             <TableRow>
-              <TableCell>Label</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Trigger</TableCell>
-              <TableCell>Started</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Open</TableCell>
+              <TableCell sx={{ width: '50%' }}>Run Id</TableCell>
+              <TableCell sx={{ width: '12%' }}>Trigger</TableCell>
+              <TableCell sx={{ width: '19%' }}>Started</TableCell>
+              <TableCell sx={{ width: '11%' }}>Status</TableCell>
+              <TableCell align="right" sx={{ width: '8%' }}>Open</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {runs.map((run) => (
-              <TableRow key={run.id} hover sx={{ cursor: 'pointer' }} onClick={() => navigate(`/runs/${run.id}`)}>
-                <TableCell>{run.label}</TableCell>
+            {rebaseRuns.pageItems.map((run) => (
+              <TableRow key={run.id} hover sx={{ cursor: 'pointer' }} onClick={() => navigate(runUrl(run))}>
+                <TableCell sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{run.label}</TableCell>
+                <TableCell>{capitalize(run.trigger)}</TableCell>
+                <TableCell>{new Date(run.startTime).toLocaleString()}</TableCell>
                 <TableCell>
-                  <Chip size="small" label={run.type === 'ci' ? 'CI' : 'CD'} variant="outlined" />
+                  <Chip size="small" label={capitalize(run.status)} color={runStatusColor(run.status)} />
+                </TableCell>
+                <TableCell align="right">
+                  {run.externalUrl && (
+                    <Tooltip title="Open in GitHub / Harness">
+                      <IconButton
+                        size="small"
+                        href={run.externalUrl}
+                        target="_blank"
+                        rel="noopener"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <OpenInNewIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+            {rebaseRuns.total === 0 && (
+              <TableRow>
+                <TableCell colSpan={5}>
+                  <Typography color="text.secondary" align="center">
+                    No rebase runs yet
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+        <PaginationFooter
+          page={rebaseRuns.page}
+          pageCount={rebaseRuns.pageCount}
+          total={rebaseRuns.total}
+          limit={rebaseRuns.limit}
+          start={rebaseRuns.start}
+          onChange={rebaseRuns.setPage}
+        />
+      </Card>
+
+      <Typography variant="h6" fontWeight={600} gutterBottom>
+        Repave Runs
+      </Typography>
+      <Card variant="outlined">
+        <Table size="small" sx={{ tableLayout: 'fixed' }}>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ width: '35%' }}>Run Id</TableCell>
+              <TableCell sx={{ width: '15%' }}>Environments</TableCell>
+              <TableCell sx={{ width: '12%' }}>Trigger</TableCell>
+              <TableCell sx={{ width: '19%' }}>Started</TableCell>
+              <TableCell sx={{ width: '11%' }}>Status</TableCell>
+              <TableCell align="right" sx={{ width: '8%' }}>Open</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {repaveRuns.pageItems.map((run) => (
+              <TableRow key={run.id} hover sx={{ cursor: 'pointer' }} onClick={() => navigate(runUrl(run))}>
+                <TableCell sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{run.label}</TableCell>
+                <TableCell sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {run.environments?.map(capitalize).join(', ') ?? '—'}
                 </TableCell>
                 <TableCell>{capitalize(run.trigger)}</TableCell>
                 <TableCell>{new Date(run.startTime).toLocaleString()}</TableCell>
@@ -288,17 +300,25 @@ export function ComponentDetailPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {runs.length === 0 && (
+            {repaveRuns.total === 0 && (
               <TableRow>
                 <TableCell colSpan={6}>
                   <Typography color="text.secondary" align="center">
-                    No runs yet
+                    No repave runs yet
                   </Typography>
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
+        <PaginationFooter
+          page={repaveRuns.page}
+          pageCount={repaveRuns.pageCount}
+          total={repaveRuns.total}
+          limit={repaveRuns.limit}
+          start={repaveRuns.start}
+          onChange={repaveRuns.setPage}
+        />
       </Card>
 
       <ScheduleFormDialog
@@ -308,41 +328,6 @@ export function ComponentDetailPage() {
         schedule={editingSchedule}
         canTargetProduction={canProd}
       />
-
-      <Dialog open={repaveOpen} onClose={() => setRepaveOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Repave component</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Select target environments. Production requires Operations role.
-          </Typography>
-          <FormGroup>
-            {(['nonprod', 'preprod', 'production'] as const).map((env) => (
-              <FormControlLabel
-                key={env}
-                control={
-                  <Checkbox
-                    checked={repaveEnvs.includes(env)}
-                    onChange={() => toggleRepaveEnv(env)}
-                    disabled={env === 'production' && !canProd}
-                  />
-                }
-                label={
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <span style={{ textTransform: 'capitalize' }}>{env}</span>
-                    {env === 'production' && !canProd && <Chip size="small" label="Ops only" color="warning" />}
-                  </Stack>
-                }
-              />
-            ))}
-          </FormGroup>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRepaveOpen(false)}>Cancel</Button>
-          <Button variant="contained" disabled={repaveEnvs.length === 0} onClick={handleStartRepave}>
-            Start Repave
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }

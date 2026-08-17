@@ -27,8 +27,8 @@ defined in `apps/web/src/types.ts`.
   runs across all applications and components.
 - **Applications & Components** — portfolio browsing with component/schedule
   counts, environment status, and per-component Rebase/Repave actions.
-- **Pipeline Runs & Deployments** — full run history (`/runs`) and a CD-only
-  deployment view (`/deployments`), each with environment/status filters.
+- **Rebases & Repaves** — full CI run history (`/rebases`) and a CD-only
+  deployment view (`/repaves`), each with environment/status filters.
 - **Schedules** — weekly/biweekly recurrence with automated (rebase + repave)
   or manual (rebase only) mode, pause/resume, and human-readable next-run
   calculation (`apps/web/src/lib/scheduleFormat.ts`).
@@ -76,6 +76,21 @@ Open **http://localhost:5173**.
 | Command | Description |
 |---------|-------------|
 | `npm run dev:web` | Start the Vite frontend |
+
+## Running in a container (Podman)
+
+The app builds to static assets and serves them from an unprivileged nginx
+image (`nginxinc/nginx-unprivileged`) — no root user, listens on 8080, works
+under rootless Podman and OpenShift-style restricted SCCs without changes.
+
+```bash
+podman build -t lob-dashboard -f Containerfile .
+podman run --rm -p 8080:8080 lob-dashboard
+```
+
+Open **http://localhost:8080**. `nginx.conf` includes an SPA fallback
+(`try_files ... /index.html`) so deep links (e.g. `/rebases/some-run-id`)
+survive a hard refresh instead of 404ing at the web server.
 
 ## Wiring up a real backend
 

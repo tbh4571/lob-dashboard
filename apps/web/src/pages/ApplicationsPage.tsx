@@ -3,7 +3,7 @@ import { Box, Typography, Card, CardContent, CardActionArea, Chip, Stack } from 
 import Grid from '@mui/material/Grid2';
 import WidgetsIcon from '@mui/icons-material/Widgets';
 import ScheduleIcon from '@mui/icons-material/Schedule';
-import { listApplications, listComponentsByApplication } from '../lib/mockData';
+import { applicationUrl, listApplications, listComponentsByApplication } from '../lib/mockData';
 import { useDataStore } from '../lib/store';
 
 export function ApplicationsPage() {
@@ -28,7 +28,7 @@ export function ApplicationsPage() {
           return (
             <Grid key={app.id} size={{ xs: 12, md: 6, lg: 4 }}>
               <Card variant="outlined" sx={{ height: '100%' }}>
-                <CardActionArea component={RouterLink} to={`/applications/${app.id}`} sx={{ height: '100%' }}>
+                <CardActionArea component={RouterLink} to={applicationUrl(app.id)} sx={{ height: '100%' }}>
                   <CardContent>
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                       {app.name}

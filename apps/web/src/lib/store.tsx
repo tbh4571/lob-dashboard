@@ -4,7 +4,14 @@
 // through their steps on a timer to give the subway map something to show.
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import type { Environment, PipelineRun, PipelineStep, Schedule, ScheduleFrequency, ScheduleMode } from '../types';
-import { filterRuns, getComponentById, runs as seedRuns, schedules as seedSchedules, type RunFilter } from './mockData';
+import {
+  filterRuns,
+  getApplicationById,
+  getComponentById,
+  runs as seedRuns,
+  schedules as seedSchedules,
+  type RunFilter,
+} from './mockData';
 import { makeRunName } from './id';
 
 const CI_STEP_NAMES = ['Checkout', 'Build', 'Unit Tests', 'Scan', 'Push Image'];
@@ -17,12 +24,12 @@ function nextScheduleId(): string {
   return `sch-${scheduleIdCounter}`;
 }
 
-/** Generates a `<rebase|repave>-<applicationId>-<componentId>-<randomToken>` name,
+/** Generates a `<rebase|repave>-<applicationName>-<componentName>-<randomToken>` name,
  * retrying on the (astronomically unlikely) chance of a collision with an existing run. */
-function uniqueRunName(type: 'rebase' | 'repave', applicationId: string, componentId: string, existingRuns: PipelineRun[]): string {
-  let name = makeRunName(type, applicationId, componentId);
+function uniqueRunName(type: 'rebase' | 'repave', applicationName: string, componentName: string, existingRuns: PipelineRun[]): string {
+  let name = makeRunName(type, applicationName, componentName);
   while (existingRuns.some((r) => r.id === name)) {
-    name = makeRunName(type, applicationId, componentId);
+    name = makeRunName(type, applicationName, componentName);
   }
   return name;
 }
@@ -137,8 +144,9 @@ export function DataStoreProvider({ children }: { children: ReactNode }) {
     (componentId: string, triggeredBy: string): PipelineRun => {
       const component = getComponentById(componentId);
       const applicationId = component?.applicationId ?? '';
+      const application = applicationId ? getApplicationById(applicationId) : undefined;
       const now = new Date().toISOString();
-      const name = uniqueRunName('rebase', applicationId, componentId, runs);
+      const name = uniqueRunName('rebase', application?.name ?? applicationId, component?.name ?? componentId, runs);
       const run: PipelineRun = {
         id: name,
         componentId,
@@ -149,6 +157,7 @@ export function DataStoreProvider({ children }: { children: ReactNode }) {
         trigger: 'on-demand',
         triggeredBy,
         startTime: now,
+        externalUrl: `https://github.com/lob/${component?.name ?? componentId}/actions/runs/${Date.now()}`,
         steps: buildSteps(CI_STEP_NAMES),
         createdAt: now,
       };
@@ -163,8 +172,9 @@ export function DataStoreProvider({ children }: { children: ReactNode }) {
     (componentId: string, environments: Environment[], triggeredBy: string): PipelineRun => {
       const component = getComponentById(componentId);
       const applicationId = component?.applicationId ?? '';
+      const application = applicationId ? getApplicationById(applicationId) : undefined;
       const now = new Date().toISOString();
-      const name = uniqueRunName('repave', applicationId, componentId, runs);
+      const name = uniqueRunName('repave', application?.name ?? applicationId, component?.name ?? componentId, runs);
       const run: PipelineRun = {
         id: name,
         componentId,
@@ -176,6 +186,7 @@ export function DataStoreProvider({ children }: { children: ReactNode }) {
         triggeredBy,
         environments,
         startTime: now,
+        externalUrl: `https://app.harness.io/.../executions/${Date.now()}`,
         steps: buildSteps(CD_STEP_NAMES),
         createdAt: now,
       };

@@ -14,7 +14,7 @@ import type {
   Schedule,
   StepStatus,
 } from '../types';
-import { makeRunName } from './id';
+import { makeRunName, slugify } from './id';
 
 const NOW = Date.now();
 const MINUTE = 60 * 1000;
@@ -434,7 +434,7 @@ export const schedules: Schedule[] = [
     mode: 'automated',
     environments: ['nonprod'],
     enabled: true,
-    createdBy: 'persona-ops',
+    createdBy: 'persona-dev',
     createdAt: iso(75 * DAY),
     updatedAt: iso(75 * DAY),
   },
@@ -499,7 +499,7 @@ export const schedules: Schedule[] = [
     mode: 'automated',
     environments: ['nonprod', 'preprod'],
     enabled: true,
-    createdBy: 'persona-dev',
+    createdBy: 'persona-ops',
     createdAt: iso(40 * DAY),
     updatedAt: iso(40 * DAY),
   },
@@ -512,7 +512,7 @@ export const schedules: Schedule[] = [
     mode: 'manual',
     environments: [],
     enabled: true,
-    createdBy: 'persona-dev',
+    createdBy: 'persona-ops',
     createdAt: iso(35 * DAY),
     updatedAt: iso(35 * DAY),
   },
@@ -551,7 +551,7 @@ export const schedules: Schedule[] = [
     mode: 'manual',
     environments: [],
     enabled: true,
-    createdBy: 'persona-dev',
+    createdBy: 'persona-ops',
     createdAt: iso(48 * DAY),
     updatedAt: iso(48 * DAY),
   },
@@ -577,7 +577,7 @@ export const schedules: Schedule[] = [
     mode: 'automated',
     environments: ['nonprod'],
     enabled: true,
-    createdBy: 'persona-dev',
+    createdBy: 'persona-ops',
     createdAt: iso(42 * DAY),
     updatedAt: iso(42 * DAY),
   },
@@ -590,7 +590,7 @@ export const schedules: Schedule[] = [
     mode: 'manual',
     environments: [],
     enabled: false,
-    createdBy: 'persona-dev',
+    createdBy: 'persona-ops',
     createdAt: iso(70 * DAY),
     updatedAt: iso(15 * DAY),
   },
@@ -616,7 +616,7 @@ export const schedules: Schedule[] = [
     mode: 'automated',
     environments: ['nonprod'],
     enabled: true,
-    createdBy: 'persona-dev',
+    createdBy: 'persona-ops',
     createdAt: iso(38 * DAY),
     updatedAt: iso(38 * DAY),
   },
@@ -629,7 +629,7 @@ export const schedules: Schedule[] = [
     mode: 'manual',
     environments: [],
     enabled: true,
-    createdBy: 'persona-dev',
+    createdBy: 'persona-ops',
     createdAt: iso(52 * DAY),
     updatedAt: iso(52 * DAY),
   },
@@ -655,7 +655,7 @@ export const schedules: Schedule[] = [
     mode: 'automated',
     environments: ['nonprod'],
     enabled: true,
-    createdBy: 'persona-dev',
+    createdBy: 'persona-ops',
     createdAt: iso(33 * DAY),
     updatedAt: iso(33 * DAY),
   },
@@ -681,7 +681,7 @@ export const schedules: Schedule[] = [
     mode: 'manual',
     environments: [],
     enabled: true,
-    createdBy: 'persona-dev',
+    createdBy: 'persona-ops',
     createdAt: iso(44 * DAY),
     updatedAt: iso(44 * DAY),
   },
@@ -746,7 +746,8 @@ interface RepaveOpts {
 
 function makeRebaseRun(component: Component, opts: RebaseOpts): PipelineRun {
   const { n, agoMs, status = 'success', triggeredBy = 'persona-dev', trigger = 'on-demand' } = opts;
-  const name = makeRunName('rebase', component.applicationId, component.id);
+  const application = getApplicationById(component.applicationId);
+  const name = makeRunName('rebase', application?.name ?? component.applicationId, component.name);
   if (status === 'running') {
     return {
       id: name,
@@ -790,7 +791,8 @@ function makeRebaseRun(component: Component, opts: RebaseOpts): PipelineRun {
 
 function makeRepaveRun(component: Component, opts: RepaveOpts): PipelineRun {
   const { n, agoMs, environments, status = 'success', triggeredBy = 'persona-ops', trigger = 'on-demand' } = opts;
-  const name = makeRunName('repave', component.applicationId, component.id);
+  const application = getApplicationById(component.applicationId);
+  const name = makeRunName('repave', application?.name ?? component.applicationId, component.name);
   const id = name;
   const label = name;
   const externalUrl = `https://app.harness.io/.../executions/${2000 + n}`;
@@ -964,6 +966,36 @@ export function getComponentById(id: string): Component | undefined {
 
 export function listComponentsByApplication(applicationId: string): Component[] {
   return components.filter((c) => c.applicationId === applicationId);
+}
+
+export function getApplicationBySlug(slug: string): Application | undefined {
+  return applications.find((a) => slugify(a.name) === slug);
+}
+
+export function getComponentBySlug(applicationSlug: string, componentSlug: string): Component | undefined {
+  const app = getApplicationBySlug(applicationSlug);
+  if (!app) return undefined;
+  return components.find((c) => c.applicationId === app.id && slugify(c.name) === componentSlug);
+}
+
+/** `/applications/:slug` path for a given application id, e.g. app-1 -> /applications/customer-portal. */
+export function applicationUrl(applicationId: string): string {
+  const app = getApplicationById(applicationId);
+  return `/applications/${app ? slugify(app.name) : applicationId}`;
+}
+
+/** `/components/:appSlug/:componentSlug` path for a given component id. */
+export function componentUrl(componentId: string): string {
+  const component = getComponentById(componentId);
+  if (!component) return `/components/${componentId}`;
+  const app = getApplicationById(component.applicationId);
+  const appSlug = app ? slugify(app.name) : component.applicationId;
+  return `/components/${appSlug}/${slugify(component.name)}`;
+}
+
+/** `/rebases/:id` or `/repaves/:id` depending on run type. */
+export function runUrl(run: Pick<PipelineRun, 'id' | 'type'>): string {
+  return run.type === 'ci' ? `/rebases/${run.id}` : `/repaves/${run.id}`;
 }
 
 export interface RunFilter {

@@ -3,6 +3,7 @@ import { Box, Typography, Card, CardContent, Chip, Stack, Breadcrumbs, Link, But
 import Grid from '@mui/material/Grid2';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { useDataStore } from '../lib/store';
+import { applicationUrl, componentUrl } from '../lib/mockData';
 import { capitalize, runStatusColor } from '../lib/status';
 import { SubwayMap } from '../components/SubwayMap';
 
@@ -26,8 +27,13 @@ export function RunDetailPage() {
   return (
     <Box>
       <Breadcrumbs sx={{ mb: 2 }}>
-        <Link component={RouterLink} to="/runs" underline="hover" color="inherit">
-          Runs
+        <Link
+          component={RouterLink}
+          to={run.type === 'ci' ? '/rebases' : '/repaves'}
+          underline="hover"
+          color="inherit"
+        >
+          {run.type === 'ci' ? 'Rebases' : 'Repaves'}
         </Link>
         <Typography color="text.primary">{run.label}</Typography>
       </Breadcrumbs>
@@ -112,10 +118,10 @@ export function RunDetailPage() {
       <Divider sx={{ my: 3 }} />
 
       <Stack direction="row" spacing={2}>
-        <Button component={RouterLink} to={`/components/${run.componentId}`} variant="outlined">
+        <Button component={RouterLink} to={componentUrl(run.componentId)} variant="outlined">
           View Component
         </Button>
-        <Button component={RouterLink} to={`/applications/${run.applicationId}`} variant="text">
+        <Button component={RouterLink} to={applicationUrl(run.applicationId)} variant="text">
           View Application
         </Button>
       </Stack>

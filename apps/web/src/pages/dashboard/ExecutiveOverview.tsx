@@ -4,10 +4,14 @@ import ShieldIcon from '@mui/icons-material/Shield';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import type { Application, Component, PipelineRun } from '../../types';
+import { applicationUrl } from '../../lib/mockData';
 import { capitalize, envStatusColor } from '../../lib/status';
 import type { StatTile } from '../../components/StatGrid';
 import { DeploymentActivityChart } from '../../components/DeploymentActivityChart';
+import { UpcomingSchedulesTables } from '../../components/UpcomingSchedulesTables';
 import { useDataStore } from '../../lib/store';
+import { usePagination } from '../../lib/usePagination';
+import { PaginationFooter } from '../../components/PaginationFooter';
 
 interface Props {
   applications: Application[];
@@ -83,12 +87,15 @@ export function executiveStats(applications: Application[], components: Componen
 }
 
 export function ExecutiveOverview({ applications, components }: Props) {
-  const { runs } = useDataStore();
+  const { runs, schedules } = useDataStore();
   const appRows = computeAppHealthRows(applications, components);
+  const { page, setPage, pageCount, start, total, limit, pageItems } = usePagination(appRows, 5);
 
   return (
     <Box>
       <DeploymentActivityChart runs={runs} />
+
+      <UpcomingSchedulesTables schedules={schedules} components={components} />
 
       <Typography variant="h6" fontWeight={600} gutterBottom>
         Application Portfolio Health
@@ -105,10 +112,10 @@ export function ExecutiveOverview({ applications, components }: Props) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {appRows.map(({ app, componentCount, worstStatus, lastDeployedAt }) => (
+            {pageItems.map(({ app, componentCount, worstStatus, lastDeployedAt }) => (
               <TableRow key={app.id} hover>
                 <TableCell>
-                  <Link component={RouterLink} to={`/applications/${app.id}`} underline="hover">
+                  <Link component={RouterLink} to={applicationUrl(app.id)} underline="hover">
                     {app.name}
                   </Link>
                 </TableCell>
@@ -137,6 +144,7 @@ export function ExecutiveOverview({ applications, components }: Props) {
             )}
           </TableBody>
         </Table>
+        <PaginationFooter page={page} pageCount={pageCount} total={total} limit={limit} start={start} onChange={setPage} />
       </Card>
     </Box>
   );

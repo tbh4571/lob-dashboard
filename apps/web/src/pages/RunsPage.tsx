@@ -10,36 +10,90 @@ import {
   Chip,
   ToggleButton,
   ToggleButtonGroup,
+  TextField,
+  MenuItem,
 } from '@mui/material';
 import { useDataStore } from '../lib/store';
+import { runUrl, listApplications, listComponents, listComponentsByApplication } from '../lib/mockData';
 import { capitalize, runStatusColor } from '../lib/status';
-import type { RunStatus, RunType } from '../types';
+import { usePagination } from '../lib/usePagination';
+import { PaginationFooter } from '../components/PaginationFooter';
+import type { RunStatus } from '../types';
 
 export function RunsPage() {
   const { listRuns } = useDataStore();
-  const [typeFilter, setTypeFilter] = useState<RunType | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<RunStatus | 'all'>('all');
+  const [applicationFilter, setApplicationFilter] = useState('all');
+  const [componentFilter, setComponentFilter] = useState('all');
 
-  const runs = listRuns({
-    type: typeFilter === 'all' ? undefined : typeFilter,
+  const applications = listApplications();
+  const componentOptions = applicationFilter === 'all' ? listComponents() : listComponentsByApplication(applicationFilter);
+
+  const filteredRuns = listRuns({
+    type: 'ci',
     status: statusFilter === 'all' ? undefined : statusFilter,
-    limit: 50,
+    applicationId: applicationFilter === 'all' ? undefined : applicationFilter,
+    componentId: componentFilter === 'all' ? undefined : componentFilter,
   });
+  const { page, setPage, pageCount, start, total, limit, pageItems: runs } = usePagination(filteredRuns, 10);
 
   return (
     <Box>
       <Typography variant="h4" fontWeight={700} sx={{ mb: 3 }}>
-        CI (Rebase / GitHub Actions) and CD (Repave / Harness) executions
+        CI (Rebase / GitHub Actions) executions
       </Typography>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
-        <ToggleButtonGroup size="small" exclusive value={typeFilter} onChange={(_, v) => v && setTypeFilter(v)}>
-          <ToggleButton value="all">All</ToggleButton>
-          <ToggleButton value="ci">CI / Rebase</ToggleButton>
-          <ToggleButton value="cd">CD / Repave</ToggleButton>
-        </ToggleButtonGroup>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }} flexWrap="wrap" rowGap={2}>
+        <TextField
+          select
+          size="small"
+          label="Application"
+          value={applicationFilter}
+          onChange={(e) => {
+            setApplicationFilter(e.target.value);
+            setComponentFilter('all');
+            setPage(0);
+          }}
+          sx={{ minWidth: 200 }}
+        >
+          <MenuItem value="all">All applications</MenuItem>
+          {applications.map((app) => (
+            <MenuItem key={app.id} value={app.id}>
+              {app.name}
+            </MenuItem>
+          ))}
+        </TextField>
 
-        <ToggleButtonGroup size="small" exclusive value={statusFilter} onChange={(_, v) => v && setStatusFilter(v)}>
+        <TextField
+          select
+          size="small"
+          label="Component"
+          value={componentFilter}
+          onChange={(e) => {
+            setComponentFilter(e.target.value);
+            setPage(0);
+          }}
+          sx={{ minWidth: 200 }}
+        >
+          <MenuItem value="all">All components</MenuItem>
+          {componentOptions.map((comp) => (
+            <MenuItem key={comp.id} value={comp.id}>
+              {comp.name}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <ToggleButtonGroup
+          size="small"
+          exclusive
+          value={statusFilter}
+          onChange={(_, v) => {
+            if (v) {
+              setStatusFilter(v);
+              setPage(0);
+            }
+          }}
+        >
           <ToggleButton value="all">Any status</ToggleButton>
           <ToggleButton value="running">Running</ToggleButton>
           <ToggleButton value="success">Success</ToggleButton>
@@ -50,7 +104,7 @@ export function RunsPage() {
       <Stack spacing={1}>
         {runs.map((run) => (
           <Card key={run.id} variant="outlined">
-            <CardActionArea component={RouterLink} to={`/runs/${run.id}`}>
+            <CardActionArea component={RouterLink} to={runUrl(run)}>
               <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                 <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} gap={1}>
                   <Box>
@@ -60,24 +114,21 @@ export function RunsPage() {
                       {run.endTime && ` → ${new Date(run.endTime).toLocaleString()}`}
                       {' · '}
                       {capitalize(run.trigger)}
-                      {run.environments && ` · ${run.environments.map(capitalize).join(', ')}`}
                     </Typography>
                   </Box>
-                  <Stack direction="row" spacing={1}>
-                    <Chip size="small" label={run.type === 'ci' ? 'CI / Rebase' : 'CD / Repave'} variant="outlined" />
-                    <Chip size="small" label={capitalize(run.status)} color={runStatusColor(run.status)} />
-                  </Stack>
+                  <Chip size="small" label={capitalize(run.status)} color={runStatusColor(run.status)} />
                 </Stack>
               </CardContent>
             </CardActionArea>
           </Card>
         ))}
-        {runs.length === 0 && (
+        {total === 0 && (
           <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
             No runs match the current filters.
           </Typography>
         )}
       </Stack>
+      <PaginationFooter page={page} pageCount={pageCount} total={total} limit={limit} start={start} onChange={setPage} />
     </Box>
   );
 }

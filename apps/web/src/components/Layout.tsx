@@ -19,6 +19,8 @@ import {
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AppsIcon from '@mui/icons-material/Apps';
+import WidgetsIcon from '@mui/icons-material/Widgets';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -30,8 +32,10 @@ const DRAWER_WIDTH = 240;
 const navItems = [
   { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
   { label: 'Applications', path: '/applications', icon: <AppsIcon /> },
-  { label: 'Pipeline Runs', path: '/runs', icon: <TimelineIcon /> },
-  { label: 'Deployments', path: '/deployments', icon: <RocketLaunchIcon /> },
+  { label: 'Components', path: '/components', icon: <WidgetsIcon /> },
+  { label: 'Schedules', path: '/schedules', icon: <ScheduleIcon /> },
+  { label: 'Rebases', path: '/rebases', icon: <TimelineIcon /> },
+  { label: 'Repaves', path: '/repaves', icon: <RocketLaunchIcon /> },
 ];
 
 export function Layout() {

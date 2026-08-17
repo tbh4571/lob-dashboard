@@ -1,27 +1,11 @@
-import { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Stack,
-  Chip,
-  Link,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Button,
-  Divider,
-} from '@mui/material';
+import { Box, Typography, Card, CardContent, Stack, Chip, Link, Table, TableBody, TableCell, TableHead, TableRow, Button } from '@mui/material';
 import ErrorIcon from '@mui/icons-material/Error';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import type { PipelineRun } from '../types';
-import { getApplicationById, getComponentById } from '../lib/mockData';
+import { applicationUrl, componentUrl, getApplicationById, getComponentById, runUrl } from '../lib/mockData';
+import { usePagination } from '../lib/usePagination';
+import { PaginationFooter } from './PaginationFooter';
 
 interface Props {
   /** Failed runs, most recent first. Not pre-sliced — the queue paginates internally. */
@@ -39,12 +23,7 @@ interface Props {
  */
 export function AttentionQueue({ runs, limit = 5 }: Props) {
   const navigate = useNavigate();
-  const [page, setPage] = useState(0);
-  const total = runs.length;
-  const pageCount = Math.max(1, Math.ceil(total / limit));
-  const currentPage = Math.min(page, pageCount - 1);
-  const start = currentPage * limit;
-  const items = runs.slice(start, start + limit);
+  const { page, setPage, pageCount, start, total, pageItems: items } = usePagination(runs, limit);
 
   return (
     <Box sx={{ mb: 4 }}>
@@ -86,14 +65,14 @@ export function AttentionQueue({ runs, limit = 5 }: Props) {
                     key={run.id}
                     hover
                     sx={{ cursor: 'pointer' }}
-                    onClick={() => navigate(`/runs/${run.id}`)}
+                    onClick={() => navigate(runUrl(run))}
                   >
                     <TableCell>{run.label}</TableCell>
                     <TableCell>
                       {application ? (
                         <Link
                           component={RouterLink}
-                          to={`/applications/${application.id}`}
+                          to={applicationUrl(application.id)}
                           underline="hover"
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -107,7 +86,7 @@ export function AttentionQueue({ runs, limit = 5 }: Props) {
                       {component ? (
                         <Link
                           component={RouterLink}
-                          to={`/components/${component.id}`}
+                          to={componentUrl(component.id)}
                           underline="hover"
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -126,7 +105,7 @@ export function AttentionQueue({ runs, limit = 5 }: Props) {
                         variant="outlined"
                         color="error"
                         component={RouterLink}
-                        to={`/runs/${run.id}`}
+                        to={runUrl(run)}
                         onClick={(e) => e.stopPropagation()}
                       >
                         Open
@@ -138,37 +117,7 @@ export function AttentionQueue({ runs, limit = 5 }: Props) {
             </TableBody>
           </Table>
 
-          {pageCount > 1 && (
-            <>
-              <Divider />
-              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, py: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Showing {start + 1}–{Math.min(start + limit, total)} of {total}
-                </Typography>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Button
-                    size="small"
-                    startIcon={<ChevronLeftIcon />}
-                    disabled={currentPage === 0}
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  >
-                    Previous
-                  </Button>
-                  <Typography variant="body2" color="text.secondary">
-                    Page {currentPage + 1} of {pageCount}
-                  </Typography>
-                  <Button
-                    size="small"
-                    endIcon={<ChevronRightIcon />}
-                    disabled={currentPage >= pageCount - 1}
-                    onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-                  >
-                    Next
-                  </Button>
-                </Stack>
-              </Stack>
-            </>
-          )}
+          <PaginationFooter page={page} pageCount={pageCount} total={total} limit={limit} start={start} onChange={setPage} />
         </Card>
       )}
     </Box>
