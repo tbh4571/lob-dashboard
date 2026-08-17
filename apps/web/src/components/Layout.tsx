@@ -75,10 +75,10 @@ export function Layout() {
         elevation={0}
         sx={{
           zIndex: (t) => t.zIndex.drawer + 1,
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
-          borderBottom: '3px solid',
-          borderColor: 'secondary.main',
+          bgcolor: 'background.paper',
+          color: 'text.primary',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
         }}
       >
         <Toolbar>

@@ -1,33 +1,50 @@
 # LOB Dashboard
 
-Frontend for the Line of Business applications & components dashboard.
+Frontend for the Line of Business applications & components dashboard — tracks
+CI (Rebase) and CD (Repave) pipeline runs, deployment schedules, and
+environment health across a portfolio of applications and components.
 
-This app previously talked to an Express + tRPC BFF for its data (applications,
-components, pipeline runs, schedules, Rebase/Repave actions, and role-based
-auth). **The BFF has been removed for now** — the UI still renders, but every
-page shows a "No backend connected" placeholder where data used to load. The
-domain types the UI expects are kept in `apps/web/src/types.ts` as the shape
-a future backend should serve.
+**This is a fully mock-data-driven build.** There is no backend: all data
+lives in `apps/web/src/lib/mockData.ts` and is served through a client-side
+store (`apps/web/src/lib/store.tsx`) that simulates async pipeline-run
+progression, schedule CRUD, and Rebase/Repave triggers in memory. The domain
+types the UI expects — and that a real backend should eventually serve — are
+defined in `apps/web/src/types.ts`.
 
 ## Stack
 
 | Layer | Tech |
 |-------|------|
-| Frontend | React 19 + Vite + TypeScript + MUI + Tailwind |
-| Backend | *(removed — see above)* |
+| Frontend | React 19 + Vite + TypeScript + MUI |
+| Backend | *(none — mock data + in-memory store, see above)* |
+
+## Features
+
+- **Persona-based dashboards** — Executive, Developer, and Operations views
+  (`apps/web/src/pages/dashboard/`), switchable from the header avatar menu.
+  Role switching is a client-only convenience with no real auth.
+- **Attention Queue** — a persona-agnostic, paginated table of failed CI/CD
+  runs across all applications and components.
+- **Applications & Components** — portfolio browsing with component/schedule
+  counts, environment status, and per-component Rebase/Repave actions.
+- **Pipeline Runs & Deployments** — full run history (`/runs`) and a CD-only
+  deployment view (`/deployments`), each with environment/status filters.
+- **Schedules** — weekly/biweekly recurrence with automated (rebase + repave)
+  or manual (rebase only) mode, pause/resume, and human-readable next-run
+  calculation (`apps/web/src/lib/scheduleFormat.ts`).
 
 ## Project structure
 
 ```
 lob-dashboard/
 ├── apps/
-│   └── web/                 # Vite React frontend
+│   └── web/                    # Vite React frontend
 │       └── src/
-│           ├── components/  # Layout, NoDataNotice
-│           ├── lib/         # theme provider, status color helpers
-│           ├── pages/       # Dashboard, Applications, Runs, detail pages
-│           └── types.ts     # domain types (Application, Component, PipelineRun, ...)
-├── vitest.config.ts
+│           ├── components/     # Layout, AttentionQueue, charts, schedule dialog, ...
+│           ├── lib/            # mock data, in-memory store, persona/theme providers
+│           ├── pages/          # Dashboard, Applications, Runs, Deployments, detail pages
+│           │   └── dashboard/  # Executive / Developer / Operations overview panels
+│           └── types.ts        # domain types (Application, Component, PipelineRun, Schedule, ...)
 ├── package.json
 └── README.md
 ```
@@ -59,18 +76,15 @@ Open **http://localhost:5173**.
 | Command | Description |
 |---------|-------------|
 | `npm run dev:web` | Start the Vite frontend |
-| `npm test` | Vitest unit tests (once) |
-| `npm run test:watch` | Vitest watch mode |
-| `npm run test:coverage` | Vitest with coverage |
 
-There are currently no unit or e2e tests, since the only tests in this repo
-previously covered the removed BFF routers.
-
-## Reconnecting a backend
+## Wiring up a real backend
 
 1. Stand up a server that implements the domain model in `apps/web/src/types.ts`.
-2. Wire up data-fetching in each page (`DashboardPage`, `ApplicationsPage`,
-   `ApplicationDetailPage`, `ComponentDetailPage`, `RunsPage`, `RunDetailPage`) —
-   they currently render a static `NoDataNotice` where fetched data used to go.
-3. Re-add auth/role handling if role-gated actions (Rebase / Repave) are needed
-   again.
+2. Replace the mock reads/writes in `apps/web/src/lib/store.tsx` (`createSchedule`,
+   `updateSchedule`, `toggleSchedule`, `triggerRebase`, `triggerRepave`, `listRuns`)
+   with real API calls — the store's public interface is the integration seam;
+   pages consume it via `useDataStore()` and shouldn't need to change.
+3. Add polling (or swap in websockets/SSE) for live run/status updates in place
+   of the simulated `setTimeout`-based progression.
+4. Re-add real auth/role handling if role-gated actions (Rebase / Repave,
+   production targeting) are needed beyond the current no-auth persona switcher.
